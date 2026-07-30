@@ -1,0 +1,2 @@
+let prompt: string = readSearchJson("search.json");
+  prompt = prompt.trim();
