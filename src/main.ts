@@ -1,58 +1,78 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as http from "http";
+import * as url from "url";
 import { askOllama, processOllamaResponse } from "./search_models.ts";
 import type { ModelInfo } from "./search_models.ts";
 
-// Helper function to wait until the file exists and is populated
-async function waitForSearchJson(jsonPath = "search.json", intervalMs = 500): Promise<string> {
-  const absolutePath = path.resolve(jsonPath);
-  console.log(`Waiting for ${absolutePath} to appear...`);
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  while (!fs.existsSync(absolutePath)) {
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
+const PORT = 8000;
+const SEARCH_JSON_PATH = path.resolve("search.json");
 
-  // Small extra buffer to ensure file write has fully completed
-  await new Promise((resolve) => setTimeout(resolve, 100));
+const server = http.createServer(async (req, res) => {
+  const requestUrl = req.url || "/";
 
-  const fileContent = fs.readFileSync(absolutePath, "utf-8");
+  if (req.method === "GET" && (requestUrl === "/" || requestUrl === "/index.html")) {
+    const indexPath = path.resolve(__dirname, "../index.html");
+    
+    console.log(`[DEBUG] Attempting to serve index.html from: ${indexPath}`);
+    console.log(`[DEBUG] File exists check: ${fs.existsSync(indexPath)}`);
 
-  try {
-    const parsed = JSON.parse(fileContent);
-
-    if (typeof parsed === "object" && parsed !== null && "query" in parsed) {
-      return String(parsed.query);
+    if (fs.existsSync(indexPath)) {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      fs.createReadStream(indexPath).pipe(res);
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end(`index.html not found at expected path: ${indexPath}`);
     }
-
-    return typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2);
-  } catch {
-    return fileContent.trim();
-  }
-}
-
-async function main(): Promise<void> {
-  let prompt: string = await waitForSearchJson("search.json");
-  prompt = prompt.trim();
-
-  if (!prompt) {
-    throw new Error("search.json is empty or missing a valid 'query' property.");
+    return;
   }
 
-  console.log(`Loaded prompt from search.json:\n"${prompt}"\n`);
+  if (req.method === "POST" && requestUrl === "/") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+
+    req.on("end", async () => {
+      try {
+        const data = JSON.parse(body);
+        fs.writeFileSync(SEARCH_JSON_PATH, JSON.stringify(data, null, 2), "utf-8");
+        
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, message: "search.json created/updated" }));
+
+        console.log(`\nReceived new query from frontend: "${data.query}"`);
+        await runModelWorkflow(data.query);
+      } catch (err) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error: "Invalid JSON payload" }));
+      }
+    });
+    return;
+  }
+
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("Not Found");
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+async function runModelWorkflow(prompt: string): Promise<void> {
+  const trimmed = prompt.trim();
+  if (!trimmed) return;
+
+  console.log(`Running workflow for prompt:\n"${trimmed}"\n`);
 
   try {
-    const models: ModelInfo[] = await askOllama(prompt);
-
+    const models: ModelInfo[] = await askOllama(trimmed);
     processOllamaResponse(models);
   } catch (err) {
     console.error("Failed to run Ollama model discovery:");
     console.error(err);
-    process.exitCode = 1;
   }
 }
-
-main().catch((err) => {
-  console.error("Fatal error:");
-  console.error(err);
-  process.exitCode = 1;
-});
