@@ -1,10 +1,16 @@
-# Use a lightweight Nginx web server image
-FROM nginx:alpine
+FROM alpine:3.24
 
-# Copy your HTML file into the default Nginx public directory
-COPY index.html /usr/share/nginx/html/index.html
+# Install Node.js and npm
+RUN apk add --no-cache nodejs npm
 
-# Expose port 80 for web traffic
-EXPOSE 80
+# Set working directory
+WORKDIR /app
 
-# Nginx starts automatically in the base image, no custom CMD needed
+# Copy application files
+COPY . .
+
+# Expose the application port
+EXPOSE 8000
+
+# Start the CommonJS Node server
+CMD ["node", "server.cjs"]

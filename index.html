@@ -68,13 +68,43 @@
 <body>
 
     <div class="search-container">
-        <form class="search-form" action="https://www.google.com/search" method="GET">
+        <form class="search-form" id="searchForm">
             <svg class="search-icon" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
             </svg>
-            <input type="text" name="q" class="search-input" autofocus autocomplete="off" placeholder="Search...">
+            <input type="text" name="query" id="searchInput" class="search-input" autofocus autocomplete="off" placeholder="Search...">
         </form>
     </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const searchInput = document.getElementById('searchInput');
+
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const queryText = searchInput.value.trim();
+            if (!queryText) return;
+
+            const payload = {
+                query: queryText
+            };
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                // Handle your backend response here
+                console.log('Successfully sent JSON to backend:', payload);
+            })
+            .catch(error => {
+                console.error('Error sending request:', error);
+            });
+        });
+    </script>
 
 </body>
 </html>
