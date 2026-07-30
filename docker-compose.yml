@@ -1,0 +1,10 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    ports:
+      - 3000:3000
+    volumes:
+      - /path/to/your/config:/app/config # Where your yaml files live
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Optional, lets it auto-detect other containers
+    restart: unless-stopped
