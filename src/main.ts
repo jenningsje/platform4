@@ -3,11 +3,17 @@ import * as path from "path";
 import { askOllama, processOllamaResponse } from "./search_models.ts";
 import type { ModelInfo } from "./search_models.ts";
 
-export function readSearchJson(jsonPath = "search.json"): string {
+// Helper function to wait until the file exists and is populated
+async function waitForSearchJson(jsonPath = "search.json", intervalMs = 500): Promise<string> {
   const absolutePath = path.resolve(jsonPath);
-  if (!fs.existsSync(absolutePath)) {
-    throw new Error(`File not found: ${absolutePath}`);
+  console.log(`Waiting for ${absolutePath} to appear...`);
+
+  while (!fs.existsSync(absolutePath)) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
+
+  // Small extra buffer to ensure file write has fully completed
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   const fileContent = fs.readFileSync(absolutePath, "utf-8");
 
@@ -25,7 +31,7 @@ export function readSearchJson(jsonPath = "search.json"): string {
 }
 
 async function main(): Promise<void> {
-  let prompt: string = readSearchJson("search.json");
+  let prompt: string = await waitForSearchJson("search.json");
   prompt = prompt.trim();
 
   if (!prompt) {

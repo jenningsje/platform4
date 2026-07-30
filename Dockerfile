@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 8000
 
 # Use array format for CMD so Docker runs it properly without shell wrapping issues
-CMD ["npx", "tsx", "main.ts"]
+CMD ["npx", "tsx", "./src/main.ts"]
