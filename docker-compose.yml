@@ -1,10 +1,11 @@
 services:
   homepage:
-    image: ghcr.io/gethomepage/homepage:latest
-    container_name: homepage
+    build: .
+    container_name: homepage-app
     ports:
-      - 3000:3000
-    volumes:
-      - /path/to/your/config:/app/config # Where your yaml files live
-      - /var/run/docker.sock:/var/run/docker.sock:ro # Optional, lets it auto-detect other containers
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped

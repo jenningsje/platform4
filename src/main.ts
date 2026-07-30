@@ -44,8 +44,7 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true, message: "search.json created/updated" }));
 
-        console.log(`\nReceived new query from frontend: "${data.query}"`);
-        await runModelWorkflow(data.query);
+        console.log(`\nFrontend wrote query to search.json: "${data.query}"`);
       } catch (err) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: false, error: "Invalid JSON payload" }));
@@ -77,11 +76,16 @@ async function runModelWorkflow(prompt: string): Promise<void> {
   }
 }
 
-export function readSearchJson(jsonPath = "search.json"): string {
+export async function waitForSearchJson(jsonPath = SEARCH_JSON_PATH, intervalMs = 500): Promise<string> {
   const absolutePath = path.resolve(jsonPath);
-  if (!fs.existsSync(absolutePath)) {
-    throw new Error(`File not found: ${absolutePath}`);
+  console.log(`Waiting for ${absolutePath} to appear...`);
+
+  while (!fs.existsSync(absolutePath)) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
+
+  // Small buffer to ensure write has fully completed
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   const fileContent = fs.readFileSync(absolutePath, "utf-8");
 
@@ -99,23 +103,30 @@ export function readSearchJson(jsonPath = "search.json"): string {
 }
 
 async function main(): Promise<void> {
-  let prompt: string = readSearchJson("search.json");
-  prompt = prompt.trim();
+  while (true) {
+    let prompt: string = await waitForSearchJson(SEARCH_JSON_PATH);
+    prompt = prompt.trim();
 
-  if (!prompt) {
-    throw new Error("search.json is empty or missing a valid 'query' property.");
-  }
+    if (!prompt) {
+      console.log("search.json is empty. Waiting for a valid query...");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      continue;
+    }
 
-  console.log(`Loaded prompt from search.json:\n"${prompt}"\n`);
+    console.log(`Loaded prompt from search.json:\n"${prompt}"\n`);
 
-  try {
-    const models: ModelInfo[] = await askOllama(prompt);
+    try {
+      const models: ModelInfo[] = await askOllama(prompt);
+      processOllamaResponse(models);
+    } catch (err) {
+      console.error("Failed to run Ollama model discovery:");
+      console.error(err);
+    }
 
-    processOllamaResponse(models);
-  } catch (err) {
-    console.error("Failed to run Ollama model discovery:");
-    console.error(err);
-    process.exitCode = 1;
+    if (fs.existsSync(SEARCH_JSON_PATH)) {
+      fs.unlinkSync(SEARCH_JSON_PATH);
+      console.log("\nConsumed search.json, waiting for next query...\n");
+    }
   }
 }
 

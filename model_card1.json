@@ -1,0 +1,14 @@
+{
+  "name": "DeepDream Generator",
+  "creator": "Google Research",
+  "platform": "Web-based",
+  "usage_link": "https://deepdreamgenerator.com/",
+  "citation": "Gatys, L., Sengupta, R., & Ecker, A. (2015). A Neural Algorithm of Artistic Style. Retrieved from https://arxiv.org/abs/1508.06576",
+  "description": "DeepDream Generator is a web-based tool that applies the DeepDream algorithm to transform images into surreal, dreamlike art.",
+  "capabilities": [
+    "Image transformation",
+    "Customizable parameters"
+  ],
+  "license": "No open-source license available",
+  "logo_png": "https://deepdreamgenerator.com/wp-content/uploads/2017/03/DeepDreamGenerator-Logo.png"
+}
