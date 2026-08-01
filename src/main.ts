@@ -14,6 +14,7 @@ const SEARCH_JSON_PATH = path.resolve("search.json");
 const server = http.createServer(async (req, res) => {
   const requestUrl = req.url || "/";
 
+  // 1. Serve index.html
   if (req.method === "GET" && (requestUrl === "/" || requestUrl === "/index.html")) {
     const indexPath = path.resolve(__dirname, "../index.html");
     
@@ -30,6 +31,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 2. Serve model_card files (e.g. /model_card1.json)
+  if (req.method === "GET" && requestUrl.startsWith("/model_card")) {
+    const fileName = path.basename(requestUrl);
+    const filePath = path.resolve(".", fileName);
+
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      fs.createReadStream(filePath).pipe(res);
+    } else {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "File not found" }));
+    }
+    return;
+  }
+
+  // 3. Handle POST queries from index.html
   if (req.method === "POST" && requestUrl === "/") {
     let body = "";
     req.on("data", (chunk) => {

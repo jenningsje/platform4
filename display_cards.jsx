@@ -8,7 +8,7 @@ function ModelCards() {
     const interval = setInterval(async () => {
       const found = [];
 
-      for (let i = 0; ; i++) {
+      for (let i = 1; ; i++) {
         try {
           const response = await fetch(`/model_card${i}.json`);
 
