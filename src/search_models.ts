@@ -29,7 +29,8 @@ const customFetch: typeof fetch = (input, init) => {
   } as any) as unknown as Promise<Response>;
 };
 
-const customOllama = new Ollama({ fetch: customFetch });
+const ollamaHost = process.env.OLLAMA_HOST || 'http://host.docker.internal:11434';
+const customOllama = new Ollama({ host: ollamaHost, fetch: customFetch });
 
 export function saveModelCards(models: ModelInfo[], outputDir = "."): string[] {
   if (!fs.existsSync(outputDir)) {
