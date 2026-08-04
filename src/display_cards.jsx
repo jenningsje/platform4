@@ -31,24 +31,26 @@ function ModelCards() {
   }, []);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "16px",
-        alignItems: "flex-start",
-      }}
-    >
-      {cards.map((card, index) => (
-        <div
-          key={index}
-          style={{
-            flex: "0 0 350px",
-          }}
-        >
-          <ModelCard model={card} />
-        </div>
-      ))}
+    <div className="model-cards">
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "16px",
+          alignItems: "flex-start",
+        }}
+      >
+        {cards.map((card, index) => (
+          <div
+            key={index}
+            style={{
+              flex: "0 0 350px",
+            }}
+          >
+            <ModelCard model={card} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

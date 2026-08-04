@@ -24,17 +24,30 @@ body {
 
 
 .main-container {
-    max-width: 620px;
+    width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
-
 .search-container {
-    width: 100%;
-    margin-bottom: 30px;
-    text-align: center;
+    width: 620px;
+    max-width: 100%;
+    margin: 0 auto 40px auto;
 }
 
+.model-cards {
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+
+    gap: 24px;
+
+    width: 100%;
+
+    justify-items: center;
+
+    align-items: start;
+}
 
 .search-form {
     position: relative;
