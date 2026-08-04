@@ -11,6 +11,11 @@ const __dirname = path.dirname(__filename);
 const PORT = 9000;
 const SEARCH_JSON_PATH = path.resolve("search.json");
 
+let searchStatus = {
+  processing: false,
+  complete: false,
+};
+
 const server = http.createServer(async (req, res) => {
 
   res.setHeader("Access-Control-Allow-Origin", "http://localhost:8000");
@@ -74,6 +79,16 @@ const server = http.createServer(async (req, res) => {
     req.on("end", async () => {
       try {
         const data = JSON.parse(body);
+
+        searchStatus.processing = true;
+        searchStatus.complete = false;
+
+        fs.writeFileSync(
+            SEARCH_JSON_PATH,
+            JSON.stringify(data, null, 2),
+            "utf-8"
+        );
+
         fs.writeFileSync(SEARCH_JSON_PATH, JSON.stringify(data, null, 2), "utf-8");
         
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -102,6 +117,30 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ success: false, error: "Invalid JSON payload" }));
       }
     });
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl === "/search-status") {
+
+    let hasCards = false;
+
+    for (let i = 1; i <= 15; i++) {
+        if (fs.existsSync(path.resolve(`model_card${i}.json`))) {
+            hasCards = true;
+            break;
+        }
+    }
+
+    res.writeHead(200, {
+        "Content-Type": "application/json"
+    });
+
+    res.end(JSON.stringify({
+        processing: searchStatus.processing,
+        complete: searchStatus.complete,
+        hasCards
+    }));
+
     return;
   }
 
@@ -177,8 +216,12 @@ async function main(): Promise<void> {
 
     if (fs.existsSync(SEARCH_JSON_PATH)) {
       fs.unlinkSync(SEARCH_JSON_PATH);
-      console.log("\nConsumed search.json, waiting for next query...\n");
     }
+
+    searchStatus.processing = false;
+    searchStatus.complete = true;
+
+    console.log("\nConsumed search.json, waiting for next query...\n");
   }
 }
 
