@@ -80,6 +80,23 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ success: true, message: "search.json created/updated" }));
 
         console.log(`\nFrontend wrote query to search.json: "${data.query}"`);
+        try {
+            for (let i = 1; i<=15; i++) {
+                const cardPath = path.resolve(`model_card${i}.json`);
+
+                if (!fs.existsSync(cardPath)) {
+                    break;
+                }
+
+                fs.unlinkSync(cardPath);
+            }
+
+            console.log("Deleted old model cards.");
+        } catch (err) {
+            console.error("Failed to delete model cards:");
+            console.error(err);
+        }
+
       } catch (err) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: false, error: "Invalid JSON payload" }));
