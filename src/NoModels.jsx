@@ -1,10 +1,11 @@
 // NoModels.jsx
+import sadPusheen from "./assets/sad_pusheen.jpg";
 
 export default function NoModels() {
     return (
         <div style={styles.container}>
             <img
-                src="https://media.tenor.com/QxXwM7JQwW4AAAAi/pusheen-sad.gif"
+                src={sadPusheen}
                 alt="Sad Pusheen"
                 style={styles.image}
             />

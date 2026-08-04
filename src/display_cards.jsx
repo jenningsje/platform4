@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import ModelCard from "./model_card.jsx";
+import NoModels from "./NoModels.jsx";
 
 function ModelCards() {
   const [cards, setCards] = useState([]);
+  const [searchComplete, setSearchComplete] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -25,10 +27,25 @@ function ModelCards() {
       }
 
       setCards(found);
+
+      try {
+        const statusResponse = await fetch("http://localhost:9000/search-status");
+        const status = await statusResponse.json();
+
+        setSearchComplete(status.complete);
+
+      } catch (err) {
+        console.error("Failed to get search status:", err);
+      }
+
     }, 1000);
 
     return () => clearInterval(interval);
   }, []);
+
+  if (searchComplete && cards.length === 0) {
+    return <NoModels />;
+  }
 
   return (
     <div className="model-cards">
