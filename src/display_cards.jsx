@@ -8,7 +8,7 @@ function ModelCards() {
     const interval = setInterval(async () => {
       const found = [];
 
-      for (let i = 1; ; i++) {
+      for (let i = 1; i<=15; i++) {
         try {
           const response = await fetch(`/model_card${i}.json`);
 
@@ -31,9 +31,23 @@ function ModelCards() {
   }, []);
 
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "16px",
+        alignItems: "flex-start",
+      }}
+    >
       {cards.map((card, index) => (
-        <ModelCard key={index} model={card} />
+        <div
+          key={index}
+          style={{
+            flex: "0 0 350px",
+          }}
+        >
+          <ModelCard model={card} />
+        </div>
       ))}
     </div>
   );

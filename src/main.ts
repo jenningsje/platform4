@@ -15,20 +15,27 @@ const server = http.createServer(async (req, res) => {
   const requestUrl = req.url || "/";
 
   // 1. Serve index.html
-  if (req.method === "GET" && (requestUrl === "/" || requestUrl === "/index.html")) {
-    const indexPath = path.resolve(__dirname, "../index.html");
-    
-    console.log(`[DEBUG] Attempting to serve index.html from: ${indexPath}`);
-    console.log(`[DEBUG] File exists check: ${fs.existsSync(indexPath)}`);
+  // 1. Serve index.html and static frontend assets from src/ or root
+  if (req.method === "GET") {
+    let filePath = "";
+    let contentType = "text/plain";
 
-    if (fs.existsSync(indexPath)) {
-      res.writeHead(200, { "Content-Type": "text/html" });
-      fs.createReadStream(indexPath).pipe(res);
-    } else {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end(`index.html not found at expected path: ${indexPath}`);
+    if (requestUrl === "/" || requestUrl === "/index.html") {
+      filePath = path.resolve(__dirname, "../index.html");
+      contentType = "text/html";
+    } else if (requestUrl.endsWith(".js") || requestUrl.endsWith(".jsx")) {
+      filePath = path.resolve(__dirname, requestUrl);
+      contentType = "application/javascript";
+    } else if (requestUrl.endsWith(".css")) {
+      filePath = path.resolve(__dirname, requestUrl);
+      contentType = "text/css";
     }
-    return;
+
+    if (filePath && fs.existsSync(filePath)) {
+      res.writeHead(200, { "Content-Type": contentType });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    }
   }
 
   // 2. Serve model_card files (e.g. /model_card1.json)
