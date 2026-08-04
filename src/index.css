@@ -6,6 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
     background:
         linear-gradient(
             rgba(10, 15, 25, 0.75),
@@ -15,6 +16,7 @@ body {
         no-repeat center center fixed;
 
     background-size: cover;
+    color: #202124;
     min-height: 100vh;
     backdrop-filter: blur(6px);
     padding: 40px 20px;
@@ -26,61 +28,110 @@ body {
     margin: 0 auto;
 }
 
+
 .search-container {
-    width:100%;
-    margin-bottom:30px;
-    text-align:center;
+    width: 100%;
+    margin-bottom: 30px;
+    text-align: center;
 }
 
 
 .search-form {
+    position: relative;
+    display: flex;
+    align-items: center;
 
-    display:flex;
-    align-items:center;
+    width: 100%;
 
-    width:100%;
+    border: 1px solid rgba(255,255,255,0.25);
 
-    border:1px solid rgba(255,255,255,.25);
+    border-radius: 30px;
 
-    border-radius:30px;
+    padding: 6px 8px 6px 18px;
 
-    padding:6px 8px 6px 18px;
+    background: rgba(255,255,255,0.85);
 
-    background:rgba(255,255,255,.85);
+    backdrop-filter: blur(16px);
 
-    backdrop-filter:blur(16px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 
-    box-shadow:0 8px 32px rgba(0,0,0,.3);
+    transition: all 0.25s ease;
+}
+
+
+.search-form:hover,
+.search-form:focus-within {
+    background: rgba(255,255,255,0.95);
+
+    box-shadow:
+        0 12px 40px rgba(0,0,0,0.4);
+
+    border-color:
+        rgba(255,255,255,0.6);
 }
 
 
 .search-input {
+    flex: 1;
 
-    flex:1;
+    height: 44px;
 
-    height:44px;
+    border: none;
 
-    border:none;
+    outline: none;
 
-    outline:none;
+    font-size: 16px;
 
-    font-size:16px;
+    background: transparent;
 
-    background:transparent;
+    color: #202124;
 
-    padding-right:12px;
+    padding-right: 12px;
+}
 
+
+.search-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 
 .search-icon-btn {
+    background: none;
+    border: none;
 
-    border:none;
+    cursor: pointer;
 
-    background:none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    cursor:pointer;
+    width: 40px;
+    height: 40px;
 
-    font-size:20px;
+    border-radius: 50%;
 
+    transition: background-color 0.2s ease;
+}
+
+
+.search-icon-btn:hover {
+    background-color: rgba(66,133,244,0.1);
+}
+
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+
+    fill: #5f6368;
+
+    transition: fill 0.2s ease;
+}
+
+
+.search-form:hover .search-icon,
+.search-form:focus-within .search-icon {
+    fill: #4285f4;
 }
