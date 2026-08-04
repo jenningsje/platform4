@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ModelCard from "./model_card.jsx";
 import NoModels from "./NoModels.jsx";
+import SearchingModels from "./SearchingModels.jsx";
 
 function ModelCards() {
   const [cards, setCards] = useState([]);
@@ -42,6 +43,10 @@ function ModelCards() {
 
     return () => clearInterval(interval);
   }, []);
+
+  if (!searchComplete && cards.length === 0) {
+    return <SearchingModels />;
+  }
 
   if (searchComplete && cards.length === 0) {
     return <NoModels />;
