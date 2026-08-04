@@ -1,7 +1,9 @@
+import SearchBar from "./SearchBar.jsx";
+
 export default function App() {
   return (
-    <h1 style={{color:"white"}}>
-      React loaded
-    </h1>
+    <div className="main-container">
+      <SearchBar />
+    </div>
   );
 }
