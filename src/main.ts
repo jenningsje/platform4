@@ -8,10 +8,21 @@ import type { ModelInfo } from "./search_models.ts";
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 8000;
+const PORT = 9000;
 const SEARCH_JSON_PATH = path.resolve("search.json");
 
 const server = http.createServer(async (req, res) => {
+
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:8000");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   const requestUrl = req.url || "/";
 
   // 1. Serve index.html

@@ -4,6 +4,7 @@ services:
     container_name: homepage-app
     ports:
       - "8000:8000"
+      - "9000:9000"
     environment:
       - OLLAMA_HOST=http://host.docker.internal:11434
     extra_hosts:

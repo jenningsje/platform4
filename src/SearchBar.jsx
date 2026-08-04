@@ -17,7 +17,7 @@ export default function SearchBar() {
         };
 
         try {
-            const response = await fetch("/", {
+            const response = await fetch("http://localhost:9000/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
