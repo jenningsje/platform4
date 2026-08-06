@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function SearchBar() {
+export default function SearchBar({ setSearchStarted }) {
 
     const [query, setQuery] = useState("");
 
@@ -10,6 +10,7 @@ export default function SearchBar() {
         const trimmed = query.trim();
 
         if (!trimmed) return;
+            setSearchStarted(true);
 
         const payload = {
             query: trimmed,
