@@ -1,0 +1,13 @@
+{
+  "name": "orange3-qt5-biodepot-novnc-docker",
+  "creator": "kristiyanto",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/kristiyanto/orange3-qt5-biodepot-novnc-docker",
+  "citation": "",
+  "description": "Dockerized tool for machine learning and BioInformatics workflow with browser based GUI.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

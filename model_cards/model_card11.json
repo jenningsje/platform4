@@ -1,0 +1,13 @@
+{
+  "name": "ScHiCEDRN",
+  "creator": "BioinfoMachineLearning",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/BioinfoMachineLearning/ScHiCEDRN",
+  "citation": "",
+  "description": "Single cell 3D genome modeling tools developed in the Bioinformatics and Machine Learning Lab",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

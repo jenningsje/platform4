@@ -1,6 +1,12 @@
 import express from "express";
 import cors from "cors";
 
+
+import {
+    writeModelCards
+} from "./output/model_card_writer";
+
+
 import {
     searchAll
 } from "./search";
@@ -16,10 +22,15 @@ import {
     rerank
 } from "./ranking/reranker";
 
+
 const app =
     express();
+
 app.use(cors());
+
 app.use(express.json());
+
+
 app.post(
 "/search",
 async(req,res)=>{
@@ -47,6 +58,12 @@ async(req,res)=>{
                 query,
                 candidates
             );
+        // This was the original version
+        await writeModelCards(
+            candidates.map(
+                item => item.asset
+            )
+        );
         res.json({
             query,
             results:
@@ -62,6 +79,7 @@ async(req,res)=>{
         });
     }
 });
+
 
 app.listen(
     9000,

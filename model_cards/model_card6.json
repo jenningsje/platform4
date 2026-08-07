@@ -1,0 +1,13 @@
+{
+  "name": "mBIT",
+  "creator": "fasterius",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/fasterius/mBIT",
+  "citation": "",
+  "description": "Miscellaneous bioinformatic tools creating during my PhD studies, with everything from differential expression analysis of RNA-seq data to machine learning.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Other"
+}

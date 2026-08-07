@@ -1,0 +1,13 @@
+{
+  "name": "miRsight",
+  "creator": "RyanJP18",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/RyanJP18/miRsight",
+  "citation": "",
+  "description": "A bioinformatics research tool for predicting mRNA:miRNA targets in Homo Sapiens using machine learning.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Mozilla Public License 2.0"
+}

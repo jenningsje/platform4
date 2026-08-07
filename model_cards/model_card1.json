@@ -1,0 +1,13 @@
+{
+  "name": "my-bioinformatics-stack",
+  "creator": "nrminor",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/nrminor/my-bioinformatics-stack",
+  "citation": "",
+  "description": "Tools for configuring my bioinformatics stack on a new machine",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "MIT License"
+}

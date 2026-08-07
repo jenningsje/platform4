@@ -1,0 +1,13 @@
+{
+  "name": "biofit",
+  "creator": "psmyth94",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/psmyth94/biofit",
+  "citation": "",
+  "description": "Biofit is a machine learning library designed for bioinformatics datasets. It provides tools for transforming, extracting, training, and evaluating machine learning models on biomedical data. It also provides automatic data preprocessing, visualization, and configurable processing pipelines.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Apache License 2.0"
+}

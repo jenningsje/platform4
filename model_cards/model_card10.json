@@ -1,0 +1,13 @@
+{
+  "name": "Human-Disease-Genetic-Screen-Identifyer_G",
+  "creator": "monzia-moodie",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/monzia-moodie/Human-Disease-Genetic-Screen-Identifyer_G",
+  "citation": "",
+  "description": "AI-assisted machine learning bioinformatics project implements strategies, methods, and tools for finding the variation corresponding to disease.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

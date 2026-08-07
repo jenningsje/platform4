@@ -1,0 +1,13 @@
+{
+  "name": "PhaMers",
+  "creator": "jondeaton",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/jondeaton/PhaMers",
+  "citation": "",
+  "description": "A bioinformatic tool for identifying bacteriophages using machine learning and k-mers",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Other"
+}

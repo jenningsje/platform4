@@ -1,0 +1,13 @@
+{
+  "name": "Protein-sequence-analysis",
+  "creator": "suraj5424",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/suraj5424/Protein-sequence-analysis",
+  "citation": "",
+  "description": "This notebook does the analysis of a protein sequence dataset in FASTA format. It addresses challenges in data import, alignment, embedding, and classification using bioinformatics tools and machine learning techniques. The solution provides a systematic approach to extract insights from structured data, crucial for bioinformatics research.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Other"
+}

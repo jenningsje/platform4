@@ -1,0 +1,13 @@
+{
+  "name": "SNP2GPS",
+  "creator": "snowformatics",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/snowformatics/SNP2GPS",
+  "citation": "",
+  "description": "SNP2GPS is a bioinformatics tool designed machine learning-based prediction of sample geographic locations based on SNP data.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

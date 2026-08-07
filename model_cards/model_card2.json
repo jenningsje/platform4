@@ -1,0 +1,13 @@
+{
+  "name": "BioInfo_ML_courses",
+  "creator": "jfnavarro",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/jfnavarro/BioInfo_ML_courses",
+  "citation": "",
+  "description": "A bunch of python scripts and tools developed for BioInformatics and Machine Learning courses",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "MIT License"
+}

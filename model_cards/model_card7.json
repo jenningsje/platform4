@@ -1,0 +1,13 @@
+{
+  "name": "DNA-AI-Project",
+  "creator": "maqeelshigri-del",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/maqeelshigri-del/DNA-AI-Project",
+  "citation": "",
+  "description": "A Streamlit-based DNA sequence analysis tool with machine learning models for promoter vs non-promoter and coding vs non-coding DNA classification using k-mer features and bioinformatics techniques.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

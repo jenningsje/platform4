@@ -1,0 +1,13 @@
+{
+  "name": "drug_discovery_project",
+  "creator": "EnriqueSPR",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/EnriqueSPR/drug_discovery_project",
+  "citation": "",
+  "description": "A computational drug discovery project, in which bioinformatic and machine learning tools are used to identify possible molecular targets and drug chemical features to treat prostate cancer",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

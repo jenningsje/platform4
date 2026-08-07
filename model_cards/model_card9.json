@@ -1,0 +1,13 @@
+{
+  "name": "nanoporeBioinformatics",
+  "creator": "seanaller",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/seanaller/nanoporeBioinformatics",
+  "citation": "",
+  "description": "Collection of Bioinformatics tools that can be used on sequencing from Nanopore machines",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

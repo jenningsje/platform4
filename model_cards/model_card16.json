@@ -1,0 +1,13 @@
+{
+  "name": "UniCon3D",
+  "creator": "multicom-toolbox",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/multicom-toolbox/UniCon3D",
+  "citation": "",
+  "description": "UniCon3D: de novo protein structure prediction using united-residue conformational search via stepwise, probabilistic sampling. The tool was developed in Bioinformatics, Data Mining and Machine Learning (BDM) Lab at the University of Missouri, Columbia, USA. ",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

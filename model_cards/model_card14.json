@@ -1,0 +1,13 @@
+{
+  "name": "RNA-seq-Time-Series-Analysis",
+  "creator": "annadapusadkar-del",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/annadapusadkar-del/RNA-seq-Time-Series-Analysis",
+  "citation": "",
+  "description": "Time-series analysis of RNA-seq gene expression data using python, pandas, machine learning and Bioinformatics tools.",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "Unknown"
+}

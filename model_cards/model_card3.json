@@ -1,0 +1,13 @@
+{
+  "name": "BML_HiC_Data_Analysis",
+  "creator": "BioinfoMachineLearning",
+  "platform": "GitHub",
+  "usage_link": "https://github.com/BioinfoMachineLearning/BML_HiC_Data_Analysis",
+  "citation": "",
+  "description": "A set of tools for Hi-C data analysis developed by Bioinformatics and Machine Learning Lab",
+  "capabilities": [
+    "AI software",
+    "Machine learning"
+  ],
+  "license": "GNU General Public License v3.0"
+}
