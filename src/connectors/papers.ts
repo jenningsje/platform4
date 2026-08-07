@@ -1,82 +1,65 @@
-// src/connectors/papers.ts
-
 import axios from "axios";
-import { SearchAsset } from "../types";
-
+import type { SearchAsset } from "../types";
 
 export async function searchPapers(
-    query:string
-):Promise<SearchAsset[]> {
-
-
+    query: string
+): Promise<SearchAsset[]> {
     try {
-
-        const response =
-            await axios.get(
-                "https://api.semanticscholar.org/graph/v1/paper/search",
-                {
-                    params:{
-                        query,
-                        limit:20,
-                        fields:
+        const response = await axios.get(
+            "https://api.semanticscholar.org/graph/v1/paper/search",
+            {
+                params: {
+                    query,
+                    limit: 20,
+                    fields:
                         "title,abstract,authors,url"
-                    }
-                }
-            );
-
+                },
+                timeout: 10000
+            }
+        );
 
         return response.data.data.map(
-            (paper:any)=>({
-
+            (paper: any): SearchAsset => ({
                 name:
-                    paper.title,
-
+                    paper.title ?? "",
                 creator:
                     paper.authors
-                    ?.map(
-                        (a:any)=>a.name
-                    )
-                    .join(", ") ??
-                    "",
-
+                        ?.map(
+                            (author: any) =>
+                                author.name
+                        )
+                        .join(", ") ?? "",
                 platform:
                     "Semantic Scholar",
-
                 asset_type:
                     "paper",
-
                 usage_link:
-                    paper.url ??
-                    "",
-
+                    paper.url ?? "",
                 description:
-                    paper.abstract ??
-                    "",
-
-                capabilities:[
-                    "Research",
-                    "Scientific AI"
+                    paper.abstract ?? "",
+                capabilities: [
+                    "Scientific research",
+                    "Machine learning"
                 ],
-
                 license:
                     "Unknown",
 
                 citation:
-                    paper.title
-
+                    paper.title ?? ""
             })
         );
 
-
-    } catch(error){
-
-        console.error(
-            "Paper search failed",
-            error
-        );
-
+    } catch (error: any) {
+        if (error.response?.status === 429) {
+            console.warn(
+                "Semantic Scholar rate limit reached. Skipping paper search."
+            );
+        } else {
+            console.error(
+                "Semantic Scholar search failed:",
+                error.message ?? error
+            );
+        }
         return [];
-
     }
-
 }

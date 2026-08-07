@@ -1,55 +1,38 @@
 import ollama from "ollama";
+import type { SearchAsset } from "../types";
 
+const EMBEDDING_MODEL = "nomic-embed-text";
 
-export async function createEmbedding(
-    text:string
-):Promise<number[]> {
+// Keep embedding input comfortably below the model's context limit.
+const MAX_EMBEDDING_CHARS = 3000;
 
+export function assetToText(asset: SearchAsset): string {
+    const capabilities = Array.isArray(asset.capabilities)
+        ? asset.capabilities.slice(0, 20).join(", ")
+        : "";
 
-    const response =
-        await ollama.embeddings({
+    const text = [
+        `Name: ${asset.name}`,
+        `Creator: ${asset.creator}`,
+        `Platform: ${asset.platform}`,
+        `Type: ${asset.asset_type}`,
+        `Description: ${asset.description}`,
+        `Capabilities: ${capabilities}`,
+        `License: ${asset.license}`,
+    ].join("\n");
 
-            model:
-                "nomic-embed-text",
-
-            prompt:
-                text
-
-        });
-
-
-    return response.embedding;
-
+    return text.slice(0, MAX_EMBEDDING_CHARS);
 }
 
+export async function createEmbedding(
+    text: string
+): Promise<number[]> {
+    const safeText = text.slice(0, MAX_EMBEDDING_CHARS);
 
+    const response = await ollama.embeddings({
+        model: EMBEDDING_MODEL,
+        prompt: safeText,
+    });
 
-export function assetToText(
-    asset:any
-):string {
-
-
-    return `
-Name:
-${asset.name}
-
-Creator:
-${asset.creator}
-
-Platform:
-${asset.platform}
-
-Type:
-${asset.asset_type}
-
-Description:
-${asset.description}
-
-Capabilities:
-${asset.capabilities?.join(", ")}
-
-License:
-${asset.license}
-`;
-
+    return response.embedding;
 }
