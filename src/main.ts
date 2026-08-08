@@ -123,7 +123,7 @@ const server = http.createServer(async (req, res) => {
     let hasCards = false;
 
     for (let i = 1; i <= 15; i++) {
-        if (fs.existsSync(path.resolve(`model_card${i}.json`))) {
+        if (fs.existsSync(path.resolve(`../model_cards/model_card${i}.json`))) {
             hasCards = true;
             break;
         }
