@@ -13,12 +13,12 @@ export async function searchKaggle(
         process.env.KAGGLE_USERNAME;
 
     const key =
-        process.env.KAGGLE_KEY;
+        process.env.KAGGLE_API_TOKEN;
 
     if (!username || !key) {
 
         console.error(
-            "Kaggle search skipped: KAGGLE_USERNAME/KAGGLE_KEY not configured"
+            "Kaggle search skipped: KAGGLE_USERNAME/KAGGLE_API_TOKEN not configured"
         );
 
         return [];
