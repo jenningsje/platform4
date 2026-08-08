@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run search-engine\"",
     "backend": "tsx src/main.ts",
     "frontend": "vite --host 0.0.0.0",
     "search-engine": "tsx src/server.ts",

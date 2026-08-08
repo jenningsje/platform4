@@ -2,8 +2,6 @@ import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
 import * as url from "url";
-import { askOllama, processOllamaResponse } from "./search_models.ts";
-import type { ModelInfo } from "./search_models.ts";
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -97,7 +95,7 @@ const server = http.createServer(async (req, res) => {
         console.log(`\nFrontend wrote query to search.json: "${data.query}"`);
         try {
             for (let i = 1; i<=15; i++) {
-                const cardPath = path.resolve(`model_card${i}.json`);
+                const cardPath = path.resolve(`../model_cards/model_card${i}.json`);
 
                 if (!fs.existsSync(cardPath)) {
                     break;
@@ -152,22 +150,7 @@ server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
 
-async function runModelWorkflow(prompt: string): Promise<void> {
-  const trimmed = prompt.trim();
-  if (!trimmed) return;
-
-  console.log(`Running workflow for prompt:\n"${trimmed}"\n`);
-
-  try {
-    const models: ModelInfo[] = await askOllama(trimmed);
-    processOllamaResponse(models);
-  } catch (err) {
-    console.error("Failed to run Ollama model discovery:");
-    console.error(err);
-  }
-}
-
-export async function waitForSearchJson(jsonPath = SEARCH_JSON_PATH, intervalMs = 500): Promise<string> {
+export async function main(jsonPath = SEARCH_JSON_PATH, intervalMs = 500): Promise<string> {
   const absolutePath = path.resolve(jsonPath);
   console.log(`Waiting for ${absolutePath} to appear...`);
 
@@ -190,38 +173,6 @@ export async function waitForSearchJson(jsonPath = SEARCH_JSON_PATH, intervalMs 
     return typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2);
   } catch {
     return fileContent.trim();
-  }
-}
-
-async function main(): Promise<void> {
-  while (true) {
-    let prompt: string = await waitForSearchJson(SEARCH_JSON_PATH);
-    prompt = prompt.trim();
-
-    if (!prompt) {
-      console.log("search.json is empty. Waiting for a valid query...");
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      continue;
-    }
-
-    console.log(`Loaded prompt from search.json:\n"${prompt}"\n`);
-
-    try {
-      const models: ModelInfo[] = await askOllama(prompt);
-      processOllamaResponse(models);
-    } catch (err) {
-      console.error("Failed to run Ollama model discovery:");
-      console.error(err);
-    }
-
-    if (fs.existsSync(SEARCH_JSON_PATH)) {
-      fs.unlinkSync(SEARCH_JSON_PATH);
-    }
-
-    searchStatus.processing = false;
-    searchStatus.complete = true;
-
-    console.log("\nConsumed search.json, waiting for next query...\n");
   }
 }
 

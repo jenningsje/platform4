@@ -17,7 +17,7 @@ function ModelCards({ searchStarted }) {
 
             for (let i = 1; i <= 15; i++) {
                 try {
-                    const response = await fetch(`/model_card${i}.json`);
+                    const response = await fetch(`../model_cards/model_card${i}.json`);
 
                     if (!response.ok) {
                         break; // no more model cards
