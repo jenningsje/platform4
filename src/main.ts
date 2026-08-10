@@ -94,14 +94,16 @@ const server = http.createServer(async (req, res) => {
 
         console.log(`\nFrontend wrote query to search.json: "${data.query}"`);
         try {
-            for (let i = 1; i<=15; i++) {
-                const cardPath = path.resolve(`../model_cards/model_card${i}.json`);
+            const modelCardsDir = path.resolve("../model_cards");
 
-                if (!fs.existsSync(cardPath)) {
-                    break;
+            const files = fs.readdirSync(modelCardsDir);
+
+            for (const file of files) {
+                if (/^model_card\d+\.json$/.test(file)) {
+                    fs.unlinkSync(
+                        path.join(modelCardsDir, file)
+                    );
                 }
-
-                fs.unlinkSync(cardPath);
             }
 
             console.log("Deleted old model cards.");
