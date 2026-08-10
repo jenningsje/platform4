@@ -1,10 +1,15 @@
 // src/search.ts
 
-import { searchHuggingFace } from "./connectors/huggingface";
 import { searchGitHub } from "./connectors/github";
-import { searchModelScope } from "./connectors/modelscope";
+import { searchGitLab } from "./connectors/gitlab";
+import { searchHuggingFace } from "./connectors/huggingface";
 import { searchKaggle } from "./connectors/kaggle";
+import { searchModelScope } from "./connectors/modelscope";
 import { searchNGC } from "./connectors/ngc";
+import { searchNpm } from "./connectors/npm";
+import { searchOllama } from "./connectors/ollama";
+import { searchOpenML } from "./connectors/openml";
+import { searchReplicate } from "./connectors/replicate";
 import { searchTensorFlowHub } from "./connectors/tensorflow_hub";
 
 export async function searchAll(
@@ -14,11 +19,16 @@ export async function searchAll(
     const results =
         await Promise.allSettled([
 
-            searchHuggingFace(query),
             searchGitHub(query),
+            searchGitLab(query),
+            searchHuggingFace(query),
             searchModelScope(query),
             searchKaggle(query),
             searchNGC(query),
+            searchNpm(query),
+            searchOllama(query),
+            searchOpenML(query),
+            searchReplicate(query),
             searchTensorFlowHub(query)
 
         ]);
