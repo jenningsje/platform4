@@ -1,0 +1,15 @@
+{
+  "name": "igv",
+  "creator": "igvteam",
+  "platform": "npm",
+  "usage_link": "https://www.npmjs.com/package/igv",
+  "citation": "",
+  "description": "Embeddable genomic visualization component based on the Integrative Genomics Viewer",
+  "capabilities": [
+    "IGV",
+    "genomics",
+    "visualization",
+    "bioinformatics"
+  ],
+  "license": "MIT"
+}

@@ -17,29 +17,57 @@ export async function addDocuments(
     assets: SearchAsset[]
 ): Promise<void> {
 
-    for (const asset of assets) {
+    const CONCURRENCY = 8;
 
-        try {
+    for (let i = 0; i < assets.length; i += CONCURRENCY) {
 
-            const text = assetToText(asset);
+        const batch = assets.slice(
+            i,
+            i + CONCURRENCY
+        );
 
-            const vector =
-                await createEmbedding(text);
+        const results = await Promise.all(
+            batch.map(async (asset) => {
 
-            vectors.push({
-                id: crypto.randomUUID(),
-                asset,
-                vector
-            });
+                try {
 
-        } catch (error) {
+                    const text = assetToText(asset);
 
-            console.error(
-                `Failed to embed: ${asset.name}`,
-                error
-            );
+                    const vector =
+                        await createEmbedding(text);
+
+                    return {
+                        id: crypto.randomUUID(),
+                        asset,
+                        vector
+                    };
+
+                } catch (error) {
+
+                    console.error(
+                        `Failed to embed: ${asset.name}`,
+                        error
+                    );
+
+                    return null;
+                }
+            })
+        );
+
+        for (const result of results) {
+
+            if (result) {
+                vectors.push(result);
+            }
 
         }
+
+        console.log(
+            `Embedded ${Math.min(
+                i + CONCURRENCY,
+                assets.length
+            )}/${assets.length}`
+        );
     }
 
     console.log(

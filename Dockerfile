@@ -5,8 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 
 RUN npm install
-
-RUN npm install --save-dev concurrently
+RUN npm install --save-dev tsx concurrently
 
 COPY . .
 

@@ -1,0 +1,25 @@
+{
+  "name": "cytoscape",
+  "creator": "GitHub Actions",
+  "platform": "npm",
+  "usage_link": "https://www.npmjs.com/package/cytoscape",
+  "citation": "",
+  "description": "Graph theory (a.k.a. network) library for analysis and visualisation",
+  "capabilities": [
+    "graph",
+    "graph-theory",
+    "network",
+    "node",
+    "edge",
+    "vertex",
+    "link",
+    "analysis",
+    "visualisation",
+    "visualization",
+    "draw",
+    "render",
+    "biojs",
+    "cytoscape"
+  ],
+  "license": "MIT"
+}

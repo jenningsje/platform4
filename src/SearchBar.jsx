@@ -14,12 +14,11 @@ export default function SearchBar({ setSearchStarted }) {
             setSearchStarted(true);
 
         const payload = {
-            query: trimmed,
-            timestamp: new Date().toISOString()
+            query: trimmed
         };
 
         try {
-            const response = await fetch("http://localhost:9000/", {
+            const response = await fetch("http://localhost:9100/search", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

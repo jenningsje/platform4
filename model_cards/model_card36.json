@@ -1,0 +1,12 @@
+{
+  "name": "dna",
+  "creator": "OpenML",
+  "platform": "OpenML",
+  "usage_link": "https://www.openml.org/search?type=data&sort=runs&id=40670",
+  "citation": "",
+  "description": "No description available.",
+  "capabilities": [
+    "dataset"
+  ],
+  "license": "Unknown"
+}

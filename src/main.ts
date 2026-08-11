@@ -55,14 +55,23 @@ const server = http.createServer(async (req, res) => {
   // 2. Serve model_card files (e.g. /model_card1.json)
   if (req.method === "GET" && requestUrl.startsWith("/model_card")) {
     const fileName = path.basename(requestUrl);
-    const filePath = path.resolve(".", fileName);
-
+    const filePath = path.resolve(
+        __dirname,
+        "../model_cards",
+        fileName
+    );
     if (fs.existsSync(filePath)) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      fs.createReadStream(filePath).pipe(res);
+        res.writeHead(200, {
+            "Content-Type": "application/json"
+        });
+        fs.createReadStream(filePath).pipe(res);
     } else {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "File not found" }));
+        res.writeHead(404, {
+            "Content-Type": "application/json"
+        });
+        res.end(JSON.stringify({
+            error: "File not found"
+        }));
     }
     return;
   }
@@ -94,7 +103,7 @@ const server = http.createServer(async (req, res) => {
 
         console.log(`\nFrontend wrote query to search.json: "${data.query}"`);
         try {
-            const modelCardsDir = path.resolve("../model_cards");
+            const modelCardsDir = path.resolve(__dirname, "../model_cards");
 
             const files = fs.readdirSync(modelCardsDir);
 
@@ -121,26 +130,26 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && requestUrl === "/search-status") {
-
-    let hasCards = false;
-
-    for (let i = 1; i <= 15; i++) {
-        if (fs.existsSync(path.resolve(`../model_cards/model_card${i}.json`))) {
-            hasCards = true;
-            break;
-        }
+    const modelCardsDir = path.resolve(
+        __dirname,
+        "../model_cards"
+    );
+    const files = fs.readdirSync(modelCardsDir);
+    const hasCards = files.some(
+        (file) => /^model_card\d+\.json$/.test(file)
+    );
+    if (hasCards) {
+        searchStatus.processing = false;
+        searchStatus.complete = true;
     }
-
     res.writeHead(200, {
         "Content-Type": "application/json"
     });
-
     res.end(JSON.stringify({
         processing: searchStatus.processing,
         complete: searchStatus.complete,
         hasCards
     }));
-
     return;
   }
 

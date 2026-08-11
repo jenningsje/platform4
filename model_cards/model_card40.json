@@ -1,0 +1,25 @@
+{
+  "name": "ntseq",
+  "creator": "keithwhor",
+  "platform": "npm",
+  "usage_link": "https://www.npmjs.com/package/ntseq",
+  "citation": "",
+  "description": "Nucleotide sequence manipulation and analysis library",
+  "capabilities": [
+    "nucleotide",
+    "nucleic",
+    "acid",
+    "dna",
+    "rna",
+    "sequence",
+    "bioinformatics",
+    "biotechnology",
+    "computational",
+    "biology",
+    "analysis",
+    "genomics",
+    "gene",
+    "biojs"
+  ],
+  "license": "MIT"
+}
