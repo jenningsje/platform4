@@ -1,160 +1,197 @@
-import ollama from "ollama";
-import { SearchAsset } from "./search_layer";
+import {
+    createEmbedding,
+    assetToText
+} from "./embedder";
+
+import type { SearchAsset } from "../types";
 
 
-type EmbeddedAsset = {
+export type VectorEntry = {
+    id: string;
     asset: SearchAsset;
-    embedding: number[];
+    vector: number[];
 };
 
 
-const database: EmbeddedAsset[] = [];
+// In-memory vector store
+const vectors: VectorEntry[] = [];
 
 
+// Number of embeddings allowed to run simultaneously.
+// Start conservatively; increase if Ollama handles it well.
+const EMBEDDING_CONCURRENCY = 8;
 
-function assetToText(asset: SearchAsset): string {
 
-    return `
-Name:
-${asset.name}
+async function embedAsset(
+    asset: SearchAsset
+): Promise<VectorEntry | null> {
 
-Creator:
-${asset.creator}
+    try {
 
-Platform:
-${asset.platform}
+        const text =
+            assetToText(asset);
 
-Type:
-${asset.asset_type}
+        const vector =
+            await createEmbedding(text);
 
-Description:
-${asset.description}
+        return {
+            id: crypto.randomUUID(),
+            asset,
+            vector
+        };
 
-Capabilities:
-${asset.capabilities.join(", ")}
+    } catch (error) {
 
-License:
-${asset.license}
-`;
+        console.error(
+            `Failed to embed: ${asset.name}`,
+            error
+        );
 
+        return null;
+    }
 }
 
 
-
-async function createEmbedding(
-    text: string
-): Promise<number[]> {
-
-
-    const result =
-        await ollama.embeddings({
-            model: "nomic-embed-text",
-            prompt: text,
-        });
-
-
-    return result.embedding;
-}
-
-
-
-export async function indexAssets(
+export async function addDocuments(
     assets: SearchAsset[]
 ): Promise<void> {
 
-
-    database.length = 0;
-
-
-    for (const asset of assets) {
-
-        const embedding =
-            await createEmbedding(
-                assetToText(asset)
-            );
-
-
-        database.push({
-            asset,
-            embedding,
-        });
-
-    }
-
-
     console.log(
-        `Indexed ${database.length} assets`
+        `Embedding ${assets.length} assets with concurrency ${EMBEDDING_CONCURRENCY}`
     );
 
+    /*
+     * Process assets in controlled batches.
+     *
+     * Instead of:
+     *
+     *   asset 1 -> wait
+     *   asset 2 -> wait
+     *   asset 3 -> wait
+     *
+     * we do:
+     *
+     *   asset 1 ─┐
+     *   asset 2  │
+     *   asset 3  │
+     *   ...      ├─> Ollama
+     *   asset 8 ─┘
+     *
+     * then continue with the next batch.
+     */
+
+    for (
+        let i = 0;
+        i < assets.length;
+        i += EMBEDDING_CONCURRENCY
+    ) {
+
+        const batch =
+            assets.slice(
+                i,
+                i + EMBEDDING_CONCURRENCY
+            );
+
+        const results =
+            await Promise.all(
+                batch.map(
+                    embedAsset
+                )
+            );
+
+        for (const result of results) {
+
+            if (result) {
+                vectors.push(result);
+            }
+        }
+
+        console.log(
+            `Embedded ${Math.min(
+                i + EMBEDDING_CONCURRENCY,
+                assets.length
+            )}/${assets.length}`
+        );
+    }
+
+    console.log(
+        `Vector store size: ${vectors.length}`
+    );
 }
-
-
 
 
 function cosineSimilarity(
-    a:number[],
-    b:number[]
-):number {
-
+    a: number[],
+    b: number[]
+): number {
 
     let dot = 0;
-    let normA = 0;
-    let normB = 0;
+    let magA = 0;
+    let magB = 0;
 
+    for (
+        let i = 0;
+        i < a.length;
+        i++
+    ) {
 
-    for(let i=0;i<a.length;i++){
+        dot +=
+            a[i] * b[i];
 
-        dot += a[i] * b[i];
+        magA +=
+            a[i] * a[i];
 
-        normA += a[i] * a[i];
-
-        normB += b[i] * b[i];
-
+        magB +=
+            b[i] * b[i];
     }
 
+    if (
+        magA === 0 ||
+        magB === 0
+    ) {
+        return 0;
+    }
 
     return (
         dot /
-        (Math.sqrt(normA) *
-        Math.sqrt(normB))
+        (
+            Math.sqrt(magA) *
+            Math.sqrt(magB)
+        )
     );
-
 }
 
 
+export async function searchVectors(
+    query: string,
+    limit: number = 50
+) {
 
-
-export async function semanticSearch(
-    query:string,
-    limit:number = 10
-):Promise<SearchAsset[]> {
-
-
-    const queryEmbedding =
-        await createEmbedding(query);
-
-
-
-    const ranked =
-        database
-        .map(item => ({
-            asset:item.asset,
-            score:
-                cosineSimilarity(
-                    queryEmbedding,
-                    item.embedding
-                )
-        }))
-        .sort(
-            (a,b)=>
-                b.score-a.score
-        )
-        .slice(0,limit);
-
-
-
-    return ranked.map(
-        item => item.asset
+    console.log(
+        "Generating query embedding..."
     );
 
+    const queryVector =
+        await createEmbedding(query);
+
+    console.log(
+        "Searching vector store..."
+    );
+
+    return vectors
+        .map(entry => ({
+            asset: entry.asset,
+            score: cosineSimilarity(
+                queryVector,
+                entry.vector
+            )
+        }))
+        .sort(
+            (a, b) =>
+                b.score - a.score
+        )
+        .slice(
+            0,
+            limit
+        );
 }

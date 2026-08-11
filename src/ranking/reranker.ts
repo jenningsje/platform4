@@ -1,89 +1,74 @@
-import ollama from "ollama";
+import { Ollama } from "ollama";
+
+import type { SearchAsset } from "../types";
+
+const OLLAMA_HOST =
+    process.env.OLLAMA_HOST ||
+    "http://host.docker.internal:11434";
+
+const ollama = new Ollama({
+    host: OLLAMA_HOST
+});
+
+const RERANK_MODEL = "granite3.1-dense";
 
 export async function rerank(
     query: string,
-    results: any[]
+    candidates: {
+        asset: SearchAsset;
+        score: number;
+    }[]
 ) {
-    const response =
-        await ollama.chat({
-            model:
-                "granite3.1-dense",
-            format:
-                "json",
-            messages: [
-                {
-                    role: "user",
-                    content: `
-Rank these AI resources.
-Query:
-${query}
-Resources:
-${JSON.stringify(
-results.map(
-(item,index)=>({
-    id:index,
-    name:item.asset.name,
-    platform:item.asset.platform,
-    description:item.asset.description,
-    capabilities:item.asset.capabilities
-})
-),
-null,
-2
-)}
-Return ONLY JSON array:
-[
-{
-"id":0,
-"score":95,
-"reason":"why this matches"
-}
-]
-`
-                }
-            ]
-        });
-    const parsed =
-        JSON.parse(
-            response.message.content
-        );
-    let rankings:any[];
-    if (Array.isArray(parsed)) {
-        rankings = parsed;
+    console.log(`Reranking ${candidates.length} candidates with Ollama at ${OLLAMA_HOST}`);
+
+    const results = [];
+
+    for (const candidate of candidates) {
+        try {
+            const response = await ollama.chat({
+                model: RERANK_MODEL,
+                messages: [
+                    {
+                        role: "user",
+                        content: `Query: ${query}
+
+Candidate:
+Name: ${candidate.asset.name}
+Description: ${candidate.asset.description}
+
+Rate how relevant this candidate is to the query from 0 to 100.
+Return only the number.`
+                    }
+                ],
+                stream: false
+            });
+
+            const score = parseFloat(
+                response.message.content.trim()
+            );
+
+            results.push({
+                ...candidate,
+                rerankScore: Number.isFinite(score)
+                    ? score
+                    : 0
+            });
+
+        } catch (error) {
+            console.error(
+                `Failed to rerank ${candidate.asset.name}:`,
+                error
+            );
+
+            results.push({
+                ...candidate,
+                rerankScore: candidate.score
+            });
+        }
     }
-    else if (Array.isArray(parsed.items)) {
-        rankings = parsed.items;
-    }
-    else if (Array.isArray(parsed.results)) {
-        rankings = parsed.results;
-    }
-    else if (Array.isArray(parsed.response)) {
-        rankings = parsed.response;
-    }
-    else if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        "id" in parsed
-    ) {
-        // Granite sometimes returns one result
-        rankings = [parsed];
-    }
-    else {
-        console.error(
-            "Unexpected reranker output:",
-            parsed
-        );
-        throw new Error(
-            "Could not find ranking array"
-        );
-    }
-    return rankings.map(
-        (rank:any)=>({
-            ...results[rank.id],
-            score:
-                rank.score,
-            reason:
-                rank.reason
-        })
+
+    return results.sort(
+        (a, b) =>
+            b.rerankScore - a.rerankScore
     );
 }

@@ -1,8 +1,5 @@
 import express from "express";
 import cors from "cors";
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import { writeModelCards } from "./output/model_card_writer";
 import { searchAll } from "./search";
@@ -12,9 +9,6 @@ import {
 } from "./embedding/vector_store";
 import { rerank } from "./ranking/reranker";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 
 app.use(cors());
@@ -22,122 +16,195 @@ app.use(express.json());
 
 console.log("SERVER.TS STARTED");
 
-async function waitForSearchQuery(
-    searchFile: string,
-    intervalMs = 100
-): Promise<string> {
-    while (true) {
-
-        try {
-
-            const searchData = await fs.readFile(
-                searchFile,
-                "utf-8"
-            );
-
-            if (!searchData.trim()) {
-
-                await new Promise(resolve =>
-                    setTimeout(resolve, intervalMs)
-                );
-
-                continue;
-            }
-
-            try {
-
-                const search = JSON.parse(
-                    searchData
-                );
-
-                if (
-                    search &&
-                    typeof search === "object" &&
-                    search.query &&
-                    String(search.query).trim()
-                ) {
-
-                    return String(
-                        search.query
-                    ).trim();
-                }
-
-            } catch {
-                // search.json is still being written.
-            }
-
-        } catch {
-            // search.json does not exist yet.
-        }
-
-        await new Promise(resolve =>
-            setTimeout(resolve, intervalMs)
-        );
-    }
-}
 app.post("/search", async (req, res) => {
-    try {
-        const query =
-        typeof req.body?.query === "string"
-            ? req.body.query.trim()
-            : "";
 
-        if (!query) {
+    try {
+
+        // --------------------------------------------------
+        // 1. Get query directly from POST body
+        // --------------------------------------------------
+
+        const query = req.body?.query;
+
+        if (!query || !String(query).trim()) {
+
             return res.status(400).json({
+                success: false,
                 error: "Query is required"
             });
         }
+
+        const cleanQuery = String(query).trim();
+
         console.log(
-            `Searching for: "${query}"`
+            `Searching for: "${cleanQuery}"`
         );
-        const assets =
-            await searchAll(query);
+
+
+        // --------------------------------------------------
+        // 2. Search external sources
+        // --------------------------------------------------
+
+        console.log(
+            "========== BEFORE searchAll =========="
+        );
+
+        const assets = await searchAll(
+            cleanQuery
+        );
+
+        console.log(
+            "========== AFTER searchAll =========="
+        );
+
         console.log(
             `Found ${assets.length} assets`
         );
+
+
+        // --------------------------------------------------
+        // 3. Generate embeddings
+        // --------------------------------------------------
+
+        console.log(
+            "========== BEFORE addDocuments =========="
+        );
+
         await addDocuments(
             assets
         );
+
+        console.log(
+            "========== AFTER addDocuments =========="
+        );
+
+
+        // --------------------------------------------------
+        // 4. Vector search
+        // --------------------------------------------------
+
+        console.log(
+            "========== BEFORE searchVectors =========="
+        );
+
         const candidates =
             await searchVectors(
-                query,
+                cleanQuery,
                 50
             );
+
+        console.log(
+            "========== AFTER searchVectors =========="
+        );
+
         console.log(
             `Vector search returned ${candidates.length} candidates`
         );
+
+
+        // --------------------------------------------------
+        // 5. Rerank
+        // --------------------------------------------------
+
+        console.log(
+            "========== BEFORE rerank =========="
+        );
+
         const ranked =
             await rerank(
-                query,
+                cleanQuery,
                 candidates
             );
+
+        console.log(
+            "========== AFTER rerank =========="
+        );
+
+
+        // --------------------------------------------------
+        // 6. Write model cards
+        // --------------------------------------------------
+
+        console.log(
+            "========== BEFORE writeModelCards =========="
+        );
+
         await writeModelCards(
             candidates.map(
                 (item) => item.asset
             )
         );
+
         console.log(
-            `Generated ${candidates.length} model cards`
+            "========== AFTER writeModelCards =========="
         );
+
+
+        // --------------------------------------------------
+        // 7. Return results
+        // --------------------------------------------------
+
         res.json({
-            query,
+            success: true,
+            query: cleanQuery,
             results: ranked
         });
+
     } catch (error) {
+
         console.error(
-            "Search failed:"
+            "========== SEARCH FAILED =========="
         );
+
+        if (error instanceof Error) {
+
+            console.error(
+                "Name:",
+                error.name
+            );
+
+            console.error(
+                "Message:",
+                error.message
+            );
+
+            console.error(
+                "Stack:",
+                error.stack
+            );
+
+            if (error.cause) {
+
+                console.error(
+                    "Cause:",
+                    error.cause
+                );
+            }
+
+        } else {
+
+            console.error(
+                "Unknown error:",
+                error
+            );
+        }
+
         console.error(
-            error
+            "==================================="
         );
+
         res.status(500).json({
+            success: false,
             error: "Search failed"
         });
     }
 });
 
+
 app.listen(9100, () => {
+
     console.log(
         "AI Search Engine running on 9100"
     );
+
 });
