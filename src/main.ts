@@ -77,57 +77,139 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 3. Handle POST queries from index.html
-  if (req.method === "POST" && requestUrl === "/") {
+// 3. Handle POST queries from index.html
+if (req.method === "POST" && requestUrl === "/") {
     let body = "";
+
     req.on("data", (chunk) => {
-      body += chunk;
+        body += chunk;
     });
 
     req.on("end", async () => {
-      try {
-        const data = JSON.parse(body);
-
-        searchStatus.processing = true;
-        searchStatus.complete = false;
-
-        fs.writeFileSync(
-            SEARCH_JSON_PATH,
-            JSON.stringify(data, null, 2),
-            "utf-8"
-        );
-
-        fs.writeFileSync(SEARCH_JSON_PATH, JSON.stringify(data, null, 2), "utf-8");
-        
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: true, message: "search.json created/updated" }));
-
-        console.log(`\nFrontend wrote query to search.json: "${data.query}"`);
         try {
-            const modelCardsDir = path.resolve(__dirname, "../model_cards");
+            const data = JSON.parse(body);
 
-            const files = fs.readdirSync(modelCardsDir);
+            if (!data.query || !String(data.query).trim()) {
+                res.writeHead(400, {
+                    "Content-Type": "application/json"
+                });
 
-            for (const file of files) {
-                if (/^model_card\d+\.json$/.test(file)) {
-                    fs.unlinkSync(
-                        path.join(modelCardsDir, file)
-                    );
-                }
+                res.end(JSON.stringify({
+                    success: false,
+                    error: "Query is required"
+                }));
+
+                return;
             }
 
-            console.log("Deleted old model cards.");
-        } catch (err) {
-            console.error("Failed to delete model cards:");
-            console.error(err);
-        }
+            searchStatus.processing = true;
+            searchStatus.complete = false;
 
-      } catch (err) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: false, error: "Invalid JSON payload" }));
-      }
+            // Write the query to search.json
+            fs.writeFileSync(
+                SEARCH_JSON_PATH,
+                JSON.stringify({
+                    query: String(data.query).trim()
+                }, null, 2),
+                "utf-8"
+            );
+
+            console.log(
+                `Frontend wrote query to search.json: "${data.query}"`
+            );
+
+            // Delete old model cards
+            try {
+                const modelCardsDir = path.resolve(
+                    __dirname,
+                    "../model_cards"
+                );
+
+                const files = fs.readdirSync(modelCardsDir);
+
+                for (const file of files) {
+                    if (/^model_card\d+\.json$/.test(file)) {
+                        fs.unlinkSync(
+                            path.join(modelCardsDir, file)
+                        );
+                    }
+                }
+
+                console.log("Deleted old model cards.");
+
+            } catch (err) {
+                console.error(
+                    "Failed to delete model cards:"
+                );
+                console.error(err);
+            }
+
+            // Tell the AI search server to start searching
+            try {
+                console.log(
+                    "Sending search request to http://localhost:9100/search"
+                );
+
+                const searchResponse = await fetch(
+                    "http://localhost:9100/search",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            query: String(data.query).trim()
+                        })
+                    }
+                );
+
+                if (!searchResponse.ok) {
+                    throw new Error(
+                        `Search server returned ${searchResponse.status}`
+                    );
+                }
+
+                console.log(
+                    "Search request successfully sent to 9100."
+                );
+
+            } catch (error) {
+                console.error(
+                    "Failed to start AI search:"
+                );
+                console.error(error);
+            }
+
+            // Respond to frontend immediately
+            res.writeHead(200, {
+                "Content-Type": "application/json"
+            });
+
+            res.end(JSON.stringify({
+                success: true,
+                message: "Search started"
+            }));
+
+        } catch (err) {
+
+            console.error(
+                "Invalid search request:"
+            );
+            console.error(err);
+
+            res.writeHead(400, {
+                "Content-Type": "application/json"
+            });
+
+            res.end(JSON.stringify({
+                success: false,
+                error: "Invalid JSON payload"
+            }));
+        }
     });
+
     return;
-  }
+}
 
   if (req.method === "GET" && requestUrl === "/search-status") {
     const modelCardsDir = path.resolve(
