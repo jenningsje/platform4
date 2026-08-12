@@ -1,5 +1,10 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import { searchOpenML } from "./connectors/openml";
+import { searchReplicate } from "./connectors/replicate";
+import { searchTensorFlowHub } from "./connectors/tensorflow_hub";
+import { searchNGC } from "./connectors/ngc";
+import { searchOllama } from "./connectors/ollama";
 
 dotenv.config();
 
@@ -15,8 +20,9 @@ export type SearchAsset = {
   citation: string;
 };
 
-
-async function searchHuggingFace(query: string): Promise<SearchAsset[]> {
+async function searchHuggingFace(
+  query: string
+): Promise<SearchAsset[]> {
   try {
     const response = await axios.get(
       "https://huggingface.co/api/models",
@@ -47,7 +53,6 @@ async function searchHuggingFace(query: string): Promise<SearchAsset[]> {
         model.cardData?.citation ??
         "",
     }));
-
   } catch (err) {
     console.error(
       "HuggingFace search failed:",
@@ -58,11 +63,10 @@ async function searchHuggingFace(query: string): Promise<SearchAsset[]> {
   }
 }
 
-
-async function searchGitHub(query: string): Promise<SearchAsset[]> {
-
+async function searchGitHub(
+  query: string
+): Promise<SearchAsset[]> {
   try {
-
     const response = await axios.get(
       "https://api.github.com/search/repositories",
       {
@@ -76,7 +80,6 @@ async function searchGitHub(query: string): Promise<SearchAsset[]> {
         },
       }
     );
-
 
     return response.data.items.map(
       (repo: any) => ({
@@ -99,44 +102,33 @@ async function searchGitHub(query: string): Promise<SearchAsset[]> {
           "",
       })
     );
-
-
-  } catch(err){
-
+  } catch (err) {
     console.error(
       "GitHub search failed:",
       err
     );
 
     return [];
-
   }
-
 }
-
-
 
 async function searchPapersWithCode(
   query: string
 ): Promise<SearchAsset[]> {
-
   try {
-
     const response =
       await axios.get(
         "https://paperswithcode.com/api/v1/papers/",
         {
-          params:{
+          params: {
             search: query,
-          }
+          },
         }
       );
 
-
     return response.data.results
-      .slice(0,20)
-      .map((paper:any)=>({
-
+      .slice(0, 20)
+      .map((paper: any) => ({
         name:
           paper.title,
 
@@ -156,55 +148,220 @@ async function searchPapersWithCode(
           paper.abstract ??
           "",
 
-        capabilities:[
+        capabilities: [
           "Research",
-          "Machine Learning"
+          "Machine Learning",
         ],
 
         license:
           "Unknown",
 
         citation:
-          paper.title
-
+          paper.title,
       }));
-
-
-  } catch(err){
-
+  } catch (err) {
     console.error(
       "Papers With Code failed:",
       err
     );
 
     return [];
-
   }
-
 }
 
+async function searchKaggle(
+  query: string
+): Promise<SearchAsset[]> {
+  const username =
+    process.env.KAGGLE_USERNAME;
 
+  const key =
+    process.env.KAGGLE_API_TOKEN;
+
+  if (!username || !key) {
+    console.error(
+      "Kaggle search skipped: " +
+      "KAGGLE_USERNAME/KAGGLE_API_TOKEN not configured"
+    );
+
+    return [];
+  }
+
+  const auth = {
+    username,
+    password: key,
+  };
+
+  try {
+    const response =
+      await axios.get(
+        "https://www.kaggle.com/api/v1/datasets/list",
+        {
+          params: {
+            search: query,
+            pageSize: 20,
+          },
+          auth,
+        }
+      );
+
+    return (response.data ?? []).map(
+      (dataset: any) => ({
+        name:
+          dataset.ref ??
+          dataset.title ??
+          "",
+
+        creator:
+          dataset.ownerName ??
+          "",
+
+        platform:
+          "Kaggle",
+
+        asset_type:
+          "dataset",
+
+        usage_link:
+          dataset.ref
+            ? `https://www.kaggle.com/datasets/${dataset.ref}`
+            : "",
+
+        description:
+          dataset.description ??
+          "",
+
+        capabilities:
+          dataset.tags ??
+          [],
+
+        license:
+          dataset.licenseName ??
+          "Unknown",
+
+        citation:
+          "",
+      })
+    );
+  } catch (err) {
+    console.error(
+      "Kaggle dataset search failed:",
+      err
+    );
+
+    return [];
+  }
+}
+
+async function searchModelScope(
+  query: string
+): Promise<SearchAsset[]> {
+  try {
+    const response = await axios.get(
+      "https://modelscope.cn/api/v1/dolphin/models",
+      {
+        params: {
+          Name: query,
+          PageNumber: 1,
+          PageSize: 20,
+        },
+      }
+    );
+
+    const models =
+      response.data?.Data?.Models ??
+      response.data?.data?.Models ??
+      [];
+
+    return models.map(
+      (model: any) => ({
+        name:
+          model.Name ??
+          model.name ??
+          "",
+
+        creator:
+          model.Owner ??
+          model.owner ??
+          "",
+
+        platform:
+          "ModelScope",
+
+        asset_type:
+          "model",
+
+        usage_link:
+          model.Path ??
+          model.path ??
+          "",
+
+        description:
+          model.Description ??
+          model.description ??
+          "AI model",
+
+        capabilities:
+          model.Tags ??
+          model.tags ??
+          [],
+
+        license:
+          model.License ??
+          model.license ??
+          "Unknown",
+
+        citation:
+          "",
+      })
+    );
+  } catch (error) {
+    console.error(
+      "ModelScope search failed",
+      error
+    );
+
+    return [];
+  }
+}
 
 export async function searchAll(
-  query:string
-):Promise<SearchAsset[]> {
-
-
+  query: string
+): Promise<SearchAsset[]> {
   const [
     huggingface,
     github,
-    papers
+    papers,
+    kaggle,
+    modelscope,
+    ngc,
+    ollama,
+    openml,
+    replicate,
+    tensorflowHub,
   ] = await Promise.all([
     searchHuggingFace(query),
     searchGitHub(query),
     searchPapersWithCode(query),
+    searchKaggle(query),
+    searchModelScope(query),
+    searchNGC(query),
+    searchOllama(query),
+    searchOpenML(query),
+    searchReplicate(query),
+    searchTensorFlowHub(query),
   ]);
-
 
   return [
     ...huggingface,
     ...github,
     ...papers,
+    ...kaggle,
+    ...modelscope,
+    ...ngc,
+    ...ollama,
+    ...openml,
+    ...replicate,
+    ...tensorflowHub,
   ];
-
 }

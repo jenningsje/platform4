@@ -78,7 +78,7 @@ const server = http.createServer(async (req, res) => {
 
   // 3. Handle POST queries from index.html
 // 3. Handle POST queries from index.html
-if (req.method === "POST" && requestUrl === "/") {
+if (req.method === "POST" && requestUrl === "/search") {
     let body = "";
 
     req.on("data", (chunk) => {
