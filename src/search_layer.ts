@@ -1,6 +1,5 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { searchOpenML } from "./connectors/openml";
 import { searchReplicate } from "./connectors/replicate";
 import { searchTensorFlowHub } from "./connectors/tensorflow_hub";
 import { searchNGC } from "./connectors/ngc";
@@ -336,7 +335,6 @@ export async function searchAll(
     modelscope,
     ngc,
     ollama,
-    openml,
     replicate,
     tensorflowHub,
   ] = await Promise.all([
@@ -347,7 +345,6 @@ export async function searchAll(
     searchModelScope(query),
     searchNGC(query),
     searchOllama(query),
-    searchOpenML(query),
     searchReplicate(query),
     searchTensorFlowHub(query),
   ]);
@@ -360,7 +357,6 @@ export async function searchAll(
     ...modelscope,
     ...ngc,
     ...ollama,
-    ...openml,
     ...replicate,
     ...tensorflowHub,
   ];

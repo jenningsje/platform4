@@ -8,7 +8,6 @@ import { searchModelScope } from "./connectors/modelscope";
 import { searchNGC } from "./connectors/ngc";
 import { searchNpm } from "./connectors/npm";
 import { searchOllama } from "./connectors/ollama";
-import { searchOpenML } from "./connectors/openml";
 import { searchReplicate } from "./connectors/replicate";
 import { searchTensorFlowHub } from "./connectors/tensorflow_hub";
 
@@ -27,7 +26,6 @@ export async function searchAll(
             searchNGC(query),
             searchNpm(query),
             searchOllama(query),
-            searchOpenML(query),
             searchReplicate(query),
             searchTensorFlowHub(query)
 

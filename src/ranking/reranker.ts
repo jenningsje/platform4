@@ -26,7 +26,7 @@ export async function rerank(
     for (const candidate of candidates) {
         try {
             const response = await ollama.chat({
-                model: RERANK_MODEL,
+                model: "qwen3:14b",
                 messages: [
                     {
                         role: "user",
