@@ -6,7 +6,6 @@ import { searchHuggingFace } from "./connectors/huggingface";
 import { searchKaggle } from "./connectors/kaggle";
 import { searchModelScope } from "./connectors/modelscope";
 import { searchNGC } from "./connectors/ngc";
-import { searchNpm } from "./connectors/npm";
 import { searchOllama } from "./connectors/ollama";
 import { searchReplicate } from "./connectors/replicate";
 import { searchTensorFlowHub } from "./connectors/tensorflow_hub";
@@ -24,7 +23,6 @@ export async function searchAll(
             searchModelScope(query),
             searchKaggle(query),
             searchNGC(query),
-            searchNpm(query),
             searchOllama(query),
             searchReplicate(query),
             searchTensorFlowHub(query)
