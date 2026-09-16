@@ -16,6 +16,11 @@ export type VectorEntry = {
 // In-memory vector store
 const vectors: VectorEntry[] = [];
 
+export function clearDocuments(): void {
+    vectors.length = 0;
+    console.log("Vector store cleared.");
+}
+
 
 // Maximum number of Ollama embedding requests
 // running simultaneously.

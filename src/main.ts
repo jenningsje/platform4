@@ -10,267 +10,379 @@ const PORT = 9000;
 const SEARCH_JSON_PATH = path.resolve("search.json");
 
 let searchStatus = {
-  processing: false,
-  complete: false,
+    processing: false,
+    complete: false,
 };
 
 const server = http.createServer(async (req, res) => {
-
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:8000");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-
-  const requestUrl = req.url || "/";
-
-  // 1. Serve index.html
-  // 1. Serve index.html and static frontend assets from src/ or root
-  if (req.method === "GET") {
-    let filePath = "";
-    let contentType = "text/plain";
-
-    if (requestUrl === "/" || requestUrl === "/index.html") {
-      filePath = path.resolve(__dirname, "../index.html");
-      contentType = "text/html";
-    } else if (requestUrl.endsWith(".js") || requestUrl.endsWith(".jsx")) {
-      filePath = path.resolve(__dirname, requestUrl);
-      contentType = "application/javascript";
-    } else if (requestUrl.endsWith(".css")) {
-      filePath = path.resolve(__dirname, requestUrl);
-      contentType = "text/css";
-    }
-
-    if (filePath && fs.existsSync(filePath)) {
-      res.writeHead(200, { "Content-Type": contentType });
-      fs.createReadStream(filePath).pipe(res);
-      return;
-    }
-  }
-
-  // 2. Serve model_card files (e.g. /model_card1.json)
-  if (req.method === "GET" && requestUrl.startsWith("/model_card")) {
-    const fileName = path.basename(requestUrl);
-    const filePath = path.resolve(
-        __dirname,
-        "../model_cards",
-        fileName
+    res.setHeader(
+        "Access-Control-Allow-Origin",
+        "http://localhost:8000"
     );
-    if (fs.existsSync(filePath)) {
-        res.writeHead(200, {
-            "Content-Type": "application/json"
-        });
-        fs.createReadStream(filePath).pipe(res);
-    } else {
-        res.writeHead(404, {
-            "Content-Type": "application/json"
-        });
-        res.end(JSON.stringify({
-            error: "File not found"
-        }));
+
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, OPTIONS"
+    );
+
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type"
+    );
+
+    if (req.method === "OPTIONS") {
+        res.writeHead(204);
+        res.end();
+        return;
     }
-    return;
-  }
 
-  // 3. Handle POST queries from index.html
-// 3. Handle POST queries from index.html
-if (req.method === "POST" && requestUrl === "/search") {
-    let body = "";
+    const requestUrl = req.url || "/";
 
-    req.on("data", (chunk) => {
-        body += chunk;
-    });
+    // --------------------------------------------------
+    // Serve frontend
+    // --------------------------------------------------
 
-    req.on("end", async () => {
-        try {
-            const data = JSON.parse(body);
+    if (req.method === "GET") {
+        let filePath = "";
+        let contentType = "text/plain";
 
-            if (!data.query || !String(data.query).trim()) {
-                res.writeHead(400, {
-                    "Content-Type": "application/json"
-                });
+        if (
+            requestUrl === "/" ||
+            requestUrl === "/index.html"
+        ) {
+            filePath = path.resolve(
+                __dirname,
+                "../index.html"
+            );
 
-                res.end(JSON.stringify({
-                    success: false,
-                    error: "Query is required"
-                }));
+            contentType = "text/html";
+        } else if (
+            requestUrl.endsWith(".js") ||
+            requestUrl.endsWith(".jsx")
+        ) {
+            filePath = path.resolve(
+                __dirname,
+                requestUrl
+            );
 
-                return;
-            }
+            contentType = "application/javascript";
+        } else if (requestUrl.endsWith(".css")) {
+            filePath = path.resolve(
+                __dirname,
+                requestUrl
+            );
 
-            searchStatus.processing = true;
-            searchStatus.complete = false;
+            contentType = "text/css";
+        }
 
-            // Write the query to search.json
-            fs.writeFileSync(
-                SEARCH_JSON_PATH,
+        if (
+            filePath &&
+            fs.existsSync(filePath)
+        ) {
+            res.writeHead(200, {
+                "Content-Type": contentType,
+            });
+
+            fs.createReadStream(filePath).pipe(res);
+            return;
+        }
+    }
+
+    // --------------------------------------------------
+    // Serve model cards
+    // --------------------------------------------------
+
+    if (
+        req.method === "GET" &&
+        requestUrl.startsWith("/model_card")
+    ) {
+        const fileName = path.basename(requestUrl);
+
+        const filePath = path.resolve(
+            __dirname,
+            "../model_cards",
+            fileName
+        );
+
+        if (fs.existsSync(filePath)) {
+            res.writeHead(200, {
+                "Content-Type": "application/json",
+            });
+
+            fs.createReadStream(filePath).pipe(res);
+        } else {
+            res.writeHead(404, {
+                "Content-Type": "application/json",
+            });
+
+            res.end(
                 JSON.stringify({
-                    query: String(data.query).trim()
-                }, null, 2),
-                "utf-8"
+                    error: "File not found",
+                })
             );
+        }
 
-            console.log(
-                `Frontend wrote query to search.json: "${data.query}"`
-            );
+        return;
+    }
 
-            // Delete old model cards
+    // --------------------------------------------------
+    // Start search
+    // --------------------------------------------------
+
+    if (
+        req.method === "POST" &&
+        requestUrl === "/search"
+    ) {
+        let body = "";
+
+        req.on("data", (chunk) => {
+            body += chunk;
+        });
+
+        req.on("end", async () => {
             try {
-                const modelCardsDir = path.resolve(
-                    __dirname,
-                    "../model_cards"
-                );
+                const data = JSON.parse(body);
 
-                const files = fs.readdirSync(modelCardsDir);
+                if (
+                    !data.query ||
+                    !String(data.query).trim()
+                ) {
+                    res.writeHead(400, {
+                        "Content-Type": "application/json",
+                    });
 
-                for (const file of files) {
-                    if (/^model_card\d+\.json$/.test(file)) {
-                        fs.unlinkSync(
-                            path.join(modelCardsDir, file)
-                        );
-                    }
+                    res.end(
+                        JSON.stringify({
+                            success: false,
+                            error: "Query is required",
+                        })
+                    );
+
+                    return;
                 }
 
-                console.log("Deleted old model cards.");
+                const query = String(data.query).trim();
 
-            } catch (err) {
-                console.error(
-                    "Failed to delete model cards:"
+                searchStatus.processing = true;
+                searchStatus.complete = false;
+
+                // --------------------------------------------------
+                // Write query
+                // --------------------------------------------------
+
+                fs.writeFileSync(
+                    SEARCH_JSON_PATH,
+                    JSON.stringify(
+                        {
+                            query,
+                        },
+                        null,
+                        2
+                    ),
+                    "utf-8"
                 );
-                console.error(err);
-            }
 
-            // Tell the AI search server to start searching
-            try {
                 console.log(
-                    "Sending search request to http://localhost:9100/search"
+                    `Frontend wrote query to search.json: "${query}"`
                 );
 
-                const searchResponse = await fetch(
+                // --------------------------------------------------
+                // Start 9100 search engine
+                // DO NOT await the search itself.
+                // --------------------------------------------------
+
+                fetch(
                     "http://localhost:9100/search",
                     {
                         method: "POST",
                         headers: {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            query: String(data.query).trim()
-                        })
+                            query,
+                        }),
                     }
+                )
+                    .then(async (response) => {
+                        if (!response.ok) {
+                            console.error(
+                                `Search server returned ${response.status}`
+                            );
+
+                            searchStatus.processing = false;
+                            return;
+                        }
+
+                        console.log(
+                            "Search request successfully sent to 9100."
+                        );
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "Failed to start AI search:",
+                            error
+                        );
+
+                        searchStatus.processing = false;
+                    });
+
+                // --------------------------------------------------
+                // Respond immediately
+                // --------------------------------------------------
+
+                res.writeHead(200, {
+                    "Content-Type": "application/json",
+                });
+
+                res.end(
+                    JSON.stringify({
+                        success: true,
+                        message: "Search started",
+                    })
                 );
-
-                if (!searchResponse.ok) {
-                    throw new Error(
-                        `Search server returned ${searchResponse.status}`
-                    );
-                }
-
-                console.log(
-                    "Search request successfully sent to 9100."
-                );
-
-            } catch (error) {
+            } catch (err) {
                 console.error(
-                    "Failed to start AI search:"
+                    "Invalid search request:",
+                    err
                 );
-                console.error(error);
+
+                res.writeHead(400, {
+                    "Content-Type": "application/json",
+                });
+
+                res.end(
+                    JSON.stringify({
+                        success: false,
+                        error: "Invalid JSON payload",
+                    })
+                );
             }
+        });
 
-            // Respond to frontend immediately
-            res.writeHead(200, {
-                "Content-Type": "application/json"
-            });
-
-            res.end(JSON.stringify({
-                success: true,
-                message: "Search started"
-            }));
-
-        } catch (err) {
-
-            console.error(
-                "Invalid search request:"
-            );
-            console.error(err);
-
-            res.writeHead(400, {
-                "Content-Type": "application/json"
-            });
-
-            res.end(JSON.stringify({
-                success: false,
-                error: "Invalid JSON payload"
-            }));
-        }
-    });
-
-    return;
-}
-
-  if (req.method === "GET" && requestUrl === "/search-status") {
-    const modelCardsDir = path.resolve(
-        __dirname,
-        "../model_cards"
-    );
-    const files = fs.readdirSync(modelCardsDir);
-    const hasCards = files.some(
-        (file) => /^model_card\d+\.json$/.test(file)
-    );
-    if (hasCards) {
-        searchStatus.processing = false;
-        searchStatus.complete = true;
+        return;
     }
-    res.writeHead(200, {
-        "Content-Type": "application/json"
-    });
-    res.end(JSON.stringify({
-        processing: searchStatus.processing,
-        complete: searchStatus.complete,
-        hasCards
-    }));
-    return;
-  }
 
-  res.writeHead(404, { "Content-Type": "text/plain" });
-  res.end("Not Found");
+    // --------------------------------------------------
+    // Search status
+    // --------------------------------------------------
+
+    if (
+        req.method === "GET" &&
+        requestUrl === "/search-status"
+    ) {
+        const modelCardsDir = path.resolve(
+            __dirname,
+            "../model_cards"
+        );
+
+        let hasCards = false;
+
+        try {
+            const files = fs.readdirSync(
+                modelCardsDir
+            );
+
+            hasCards = files.some(
+                (file) =>
+                    /^model_card\d+\.json$/.test(file)
+            );
+        } catch (error) {
+            console.error(
+                "Failed to inspect model cards:",
+                error
+            );
+        }
+
+        if (hasCards) {
+            searchStatus.processing = false;
+            searchStatus.complete = true;
+        }
+
+        res.writeHead(200, {
+            "Content-Type": "application/json",
+        });
+
+        res.end(
+            JSON.stringify({
+                processing: searchStatus.processing,
+                complete: searchStatus.complete,
+                hasCards,
+            })
+        );
+
+        return;
+    }
+
+    // --------------------------------------------------
+    // Not found
+    // --------------------------------------------------
+
+    res.writeHead(404, {
+        "Content-Type": "text/plain",
+    });
+
+    res.end("Not Found");
 });
+
+// --------------------------------------------------
+// Start backend on 9000
+// --------------------------------------------------
 
 server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+    console.log(
+        `Server running at http://localhost:${PORT}`
+    );
 });
 
-export async function main(jsonPath = SEARCH_JSON_PATH, intervalMs = 500): Promise<string> {
-  const absolutePath = path.resolve(jsonPath);
-  console.log(`Waiting for ${absolutePath} to appear...`);
+export async function main(
+    jsonPath = SEARCH_JSON_PATH,
+    intervalMs = 500
+): Promise<string> {
+    const absolutePath = path.resolve(jsonPath);
 
-  while (!fs.existsSync(absolutePath)) {
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
+    console.log(
+        `Waiting for ${absolutePath} to appear...`
+    );
 
-  // Small buffer to ensure write has fully completed
-  await new Promise((resolve) => setTimeout(resolve, 100));
-
-  const fileContent = fs.readFileSync(absolutePath, "utf-8");
-
-  try {
-    const parsed = JSON.parse(fileContent);
-
-    if (typeof parsed === "object" && parsed !== null && "query" in parsed) {
-      return String(parsed.query);
+    while (!fs.existsSync(absolutePath)) {
+        await new Promise((resolve) =>
+            setTimeout(resolve, intervalMs)
+        );
     }
 
-    return typeof parsed === "string" ? parsed : JSON.stringify(parsed, null, 2);
-  } catch {
-    return fileContent.trim();
-  }
+    await new Promise((resolve) =>
+        setTimeout(resolve, 100)
+    );
+
+    const fileContent = fs.readFileSync(
+        absolutePath,
+        "utf-8"
+    );
+
+    try {
+        const parsed = JSON.parse(fileContent);
+
+        if (
+            typeof parsed === "object" &&
+            parsed !== null &&
+            "query" in parsed
+        ) {
+            return String(parsed.query);
+        }
+
+        return typeof parsed === "string"
+            ? parsed
+            : JSON.stringify(
+                parsed,
+                null,
+                2
+            );
+    } catch {
+        return fileContent.trim();
+    }
 }
 
 main().catch((err) => {
-  console.error("Fatal error:");
-  console.error(err);
-  process.exitCode = 1;
+    console.error("Fatal error:", err);
+    process.exitCode = 1;
 });

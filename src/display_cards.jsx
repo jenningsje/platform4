@@ -6,53 +6,136 @@ import SearchingModels from "./SearchingModels.jsx";
 function ModelCards({ searchStarted }) {
     const [cards, setCards] = useState([]);
     const [searchComplete, setSearchComplete] = useState(false);
+    const [searchError, setSearchError] = useState(false);
 
     useEffect(() => {
         if (!searchStarted) {
+            setCards([]);
+            setSearchComplete(false);
+            setSearchError(false);
             return;
         }
 
-        const interval = setInterval(async () => {
-            const found = [];
+        // A new search has started.
+        // Immediately remove the previous search's cards.
+        setCards([]);
+        setSearchComplete(false);
+        setSearchError(false);
 
-            for (let i = 1; i <= 15; i++) {
-                try {
-                    const response = await fetch(`../model_cards/model_card${i}.json`);
+        let cancelled = false;
 
-                    if (!response.ok) {
-                        break; // no more model cards
-                    }
-
-                    const json = await response.json();
-                    found.push(json);
-
-                } catch (err) {
-                    break;
-                }
+        async function checkSearch() {
+            if (cancelled) {
+                return;
             }
-
-            setCards(found);
 
             try {
+                /*
+                 * Ask the backend for the current search status.
+                 */
                 const statusResponse = await fetch(
-                    "http://localhost:9000/search-status"
+                    "http://localhost:9000/search-status",
+                    {
+                        cache: "no-store",
+                    }
                 );
+
+                if (!statusResponse.ok) {
+                    throw new Error(
+                        `Status request failed: ${statusResponse.status}`
+                    );
+                }
+
                 const status = await statusResponse.json();
-                setSearchComplete(status.complete);
+
+                if (cancelled) {
+                    return;
+                }
+
+                /*
+                 * Only load model cards while/after the current
+                 * search is active.
+                 */
+                const found = [];
+
+                for (let i = 1; i <= 15; i++) {
+                    try {
+                        const response = await fetch(
+                            `../model_cards/model_card${i}.json`,
+                            {
+                                cache: "no-store",
+                            }
+                        );
+
+                        if (!response.ok) {
+                            break;
+                        }
+
+                        const json = await response.json();
+                        found.push(json);
+                    } catch (err) {
+                        break;
+                    }
+                }
+
+                if (cancelled) {
+                    return;
+                }
+
+                setCards(found);
+
+                /*
+                 * The backend is the authority on whether the
+                 * current search has finished.
+                 */
+                if (status.complete) {
+                    setSearchComplete(true);
+                    return;
+                }
+
+                /*
+                 * Search is still running. Keep polling.
+                 */
+                setTimeout(checkSearch, 1000);
 
             } catch (err) {
+                if (cancelled) {
+                    return;
+                }
+
                 console.error(
-                    "Failed to get search status:",
+                    "Failed to check search status:",
                     err
                 );
+
+                /*
+                 * Do not declare the search complete merely because
+                 * a polling request failed.
+                 */
+                setSearchError(true);
+
+                setTimeout(checkSearch, 2000);
             }
-        }, 1000);
-        return () => clearInterval(interval);
+        }
+
+        /*
+         * Start immediately instead of waiting one second.
+         */
+        checkSearch();
+
+        return () => {
+            cancelled = true;
+        };
     }, [searchStarted]);
 
 
     if (!searchStarted) {
         return null;
+    }
+
+
+    if (searchError && !searchComplete && cards.length === 0) {
+        return <SearchingModels />;
     }
 
 

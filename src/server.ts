@@ -1,210 +1,210 @@
 import express from "express";
 import cors from "cors";
 
-import { writeModelCards } from "./output/model_card_writer";
 import { searchAll } from "./search";
 import {
     addDocuments,
-    searchVectors
+    searchVectors,
 } from "./embedding/vector_store";
 import { rerank } from "./ranking/reranker";
+import { writeModelCards } from "./output/model_card_writer";
+import type { SearchAsset } from "./types";
 
 const app = express();
 
-app.use(cors());
+const PORT = 9100;
+
+app.use(
+    cors({
+        origin: "http://localhost:8000",
+    })
+);
+
 app.use(express.json());
 
-console.log("SERVER.TS STARTED");
+let searchGeneration = 0;
 
 app.post("/search", async (req, res) => {
+    const query = String(
+        req.body?.query || ""
+    ).trim();
+
+    if (!query) {
+        res.status(400).json({
+            success: false,
+            error: "Query is required",
+        });
+
+        return;
+    }
+
+    const generation = ++searchGeneration;
+
+    console.log(
+        `Starting search #${generation}: "${query}"`
+    );
 
     try {
+        // --------------------------------------------------
+        // Search all sources
+        // --------------------------------------------------
+
+        const rawAssets = await searchAll(query);
+
+        console.log(
+            `Search #${generation}: found ${rawAssets.length} raw assets`
+        );
 
         // --------------------------------------------------
-        // 1. Get query directly from POST body
+        // Deduplicate
         // --------------------------------------------------
 
-        const query = req.body?.query;
+        const assetMap = new Map<
+            string,
+            SearchAsset
+        >();
 
-        if (!query || !String(query).trim()) {
+        for (const asset of rawAssets) {
+            const key =
+                `${asset.platform}:${asset.name}`;
 
-            return res.status(400).json({
-                success: false,
-                error: "Query is required"
-            });
+            if (!assetMap.has(key)) {
+                assetMap.set(key, asset);
+            }
         }
 
-        const cleanQuery = String(query).trim();
-
-        console.log(
-            `Searching for: "${cleanQuery}"`
+        const assets = Array.from(
+            assetMap.values()
         );
 
+        console.log(
+            `Search #${generation}: ${assets.length} unique assets`
+        );
 
         // --------------------------------------------------
-        // 2. Search external sources
+        // Create vectors for THIS search only
         // --------------------------------------------------
 
-        console.log(
-            "========== BEFORE searchAll =========="
-        );
-
-        const assets = await searchAll(
-            cleanQuery
-        );
-
-        console.log(
-            "========== AFTER searchAll =========="
-        );
-
-        console.log(
-            `Found ${assets.length} assets`
-        );
-
-
-        // --------------------------------------------------
-        // 3. Generate embeddings
-        // --------------------------------------------------
-
-        console.log(
-            "========== BEFORE addDocuments =========="
-        );
-
-        await addDocuments(
+        const vectors = await addDocuments(
             assets
         );
 
         console.log(
-            "========== AFTER addDocuments =========="
+            `Search #${generation}: embeddings complete`
         );
 
+        // --------------------------------------------------
+        // Vector search
+        // --------------------------------------------------
 
-        // --------------------------------------------------
-        // 4. Vector search
-        // --------------------------------------------------
+        const candidates = await searchVectors(
+            query,
+            vectors,
+            50
+        );
 
         console.log(
-            "========== BEFORE searchVectors =========="
+            `Search #${generation}: ${candidates.length} vector candidates`
         );
 
-        const candidates =
-            await searchVectors(
-                cleanQuery,
-                50
+        // --------------------------------------------------
+        // Rerank
+        // --------------------------------------------------
+
+        const ranked = await rerank(
+            query,
+            candidates
+        );
+
+        console.log(
+            `Search #${generation}: reranking complete`
+        );
+
+        // --------------------------------------------------
+        // Ignore stale searches
+        // --------------------------------------------------
+
+        if (generation !== searchGeneration) {
+            console.log(
+                `Search #${generation} is stale. Ignoring results.`
             );
 
-        console.log(
-            "========== AFTER searchVectors =========="
-        );
+            res.json({
+                success: true,
+                stale: true,
+                results: [],
+            });
 
-        console.log(
-            `Vector search returned ${candidates.length} candidates`
-        );
-
-
-        // --------------------------------------------------
-        // 5. Rerank
-        // --------------------------------------------------
-
-        console.log(
-            "========== BEFORE rerank =========="
-        );
-
-        const ranked =
-            await rerank(
-                cleanQuery,
-                candidates
-            );
-
-        console.log(
-            "========== AFTER rerank =========="
-        );
-
+            return;
+        }
 
         // --------------------------------------------------
-        // 6. Write model cards
+        // Write top model cards
         // --------------------------------------------------
 
-        console.log(
-            "========== BEFORE writeModelCards =========="
+        const topResults = ranked.slice(
+            0,
+            20
         );
 
         await writeModelCards(
-            candidates.map(
+            topResults.map(
                 (item) => item.asset
             )
         );
 
         console.log(
-            "========== AFTER writeModelCards =========="
+            `Search #${generation}: wrote ${topResults.length} model cards`
         );
 
-
         // --------------------------------------------------
-        // 7. Return results
+        // Return results
         // --------------------------------------------------
 
         res.json({
             success: true,
-            query: cleanQuery,
-            results: ranked
+            query,
+            results: topResults,
         });
-
     } catch (error) {
-
         console.error(
-            "========== SEARCH FAILED =========="
+            `Search #${generation} failed:`,
+            error
         );
 
-        if (error instanceof Error) {
-
-            console.error(
-                "Name:",
-                error.name
-            );
-
-            console.error(
-                "Message:",
-                error.message
-            );
-
-            console.error(
-                "Stack:",
-                error.stack
-            );
-
-            if (error.cause) {
-
-                console.error(
-                    "Cause:",
-                    error.cause
-                );
-            }
-
+        if (generation === searchGeneration) {
+            res.status(500).json({
+                success: false,
+                error: "Search failed",
+            });
         } else {
-
-            console.error(
-                "Unknown error:",
-                error
-            );
+            res.json({
+                success: true,
+                stale: true,
+                results: [],
+            });
         }
-
-        console.error(
-            "==================================="
-        );
-
-        res.status(500).json({
-            success: false,
-            error: "Search failed"
-        });
     }
 });
 
+// --------------------------------------------------
+// Health check
+// --------------------------------------------------
 
-app.listen(9100, () => {
+app.get("/health", (_req, res) => {
+    res.json({
+        ok: true,
+        service: "search-engine",
+        port: PORT,
+    });
+});
 
+// --------------------------------------------------
+// Start search engine on 9100
+// --------------------------------------------------
+
+app.listen(PORT, () => {
     console.log(
-        "AI Search Engine running on 9100"
+        `Search engine running at http://localhost:${PORT}`
     );
-
 });
